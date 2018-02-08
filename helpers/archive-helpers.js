@@ -34,7 +34,6 @@ exports.readListOfUrls = function(callback) {
   fs.readFile(exports.paths.list, 'utf8', function(err, chunk) {
     data += chunk;
     data = data.split('\n');
-    // console.log('readListOfUrls data ', data);
     callback(data);
   });
 };
@@ -51,10 +50,14 @@ exports.isUrlInList = function(url, callback) {
 
 exports.addUrlToList = function(url, callback) {
   // write this url directly to url list file
-  
-  fs.appendFile(exports.paths.list, url, 'utf8', callback);
-  // console.log('ADD URL TO LIST');
-  // exports.readListOfUrls(_.identity);
+  var url = url + '\n';
+  fs.appendFile(exports.paths.list, url, 'utf8', function(err) {
+    if (err) {
+      console.log(err);
+    } else {
+      callback(url);
+    }
+  });
 };
 
 exports.isUrlArchived = function(url, callback) {

@@ -3,6 +3,7 @@ var archive = require('../helpers/archive-helpers');
 var helpers = require('./http-helpers');
 var url = require('url');
 var fs = require('fs');
+var _ = require('underscore');
 // require more modules/folders here!
 
 exports.sendResponse = function(res, statusCode, message) {
@@ -52,6 +53,11 @@ var actions = {
           exports.readAndSendFile(archive.paths.archivedSites + '/' + url, res, 302);
         } else {
           exports.readAndSendFile(archive.paths.siteAssets + '/loading.html', res, 302);
+          archive.isUrlInList(url, function(bool) {
+            if (!bool) {
+              archive.addUrlToList(url, _.identity);
+            }
+          });
         }
       });
     });
