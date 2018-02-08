@@ -5,52 +5,60 @@ var url = require('url');
 var fs = require('fs');
 // require more modules/folders here!
 
+exports.sendResponse = function(res, statusCode, message) {
+  res.writeHead(statusCode, helpers.headers);
+  res.end(message);
+}; 
+
+exports.readAndSendFile = function(pathname, res, statusCode) {
+  var websiteHtml = '';
+  fs.readFile(pathname, 'utf8', function(err, chunk) {
+    websiteHtml += chunk;
+    exports.sendResponse(res, statusCode, websiteHtml);
+  });
+};
+
+exports.collectData = function() {
+};
 
 var actions = {
   'GET': function(req, res) {
-    var parsedUrl = (url.parse(req.url, true)).pathname.slice(1);
+    var parsedUrl = url.parse(req.url, true).pathname.slice(1);
+
+    if (parsedUrl === '') {
+      exports.readAndSendFile(archive.paths.siteAssets + '/index.html', res, 200);
+    } else if (parsedUrl === ('styles.css' || 'favicon.ico')) {
+      exports.readAndSendFile(archive.paths.siteAssets + '/index.html', res, 200);
+    } else {
+      archive.isUrlArchived(parsedUrl, function(bool) {
+        if (bool) { 
+          exports.readAndSendFile(archive.paths.archivedSites + '/' + parsedUrl, res, 200);
+        } else {
+          exports.sendResponse(res, 404, 'Not found');
+        }
+      });
+    }
     
-    // console.log('THIS DIRNAME', __dirname);
-    // console.log('HELPER DIR', archive.paths.dir);
-    
-    var fileData = '';
-    // console.log('ACTUAL DATA', __dirname + '/archives/sites.txt');
-    
-    fs.readFile(archive.paths.list, function(err, data) { // test data
-      fileData += data;
-      
-      var websiteHtml = '';
-      if (parsedUrl !== '' && fileData.indexOf(parsedUrl) !== -1) { // file found!!
-        // console.log('FILE FOUND!', parsedUrl);
-        // read found file -> return its contents
-        
-      } else { // file not found!!
-        // console.log('FILE NOT FOUND!', parsedUrl);
-        // var pathname = __dirname + '/public/index.html';
-        var pathname = archive.paths.siteAssets + '/index.html';
-        fs.readFile(pathname, function(err, data) {
-          if (err) {
-            // console.log('ERROR', err);
-          } else {
-            websiteHtml += data;
-            // console.log('DATA', websiteHtml);
-            res.writeHead(200, helpers.headers);
-            res.end(websiteHtml);
-          }
-        });
-      }
-    });
   },
   
   'POST': function(req, res) {
-    console.log('I got called');
-    res.end();
-  },
+    let data = '';
+    req.on('data', (chunk) => {
+      data += chunk;
+    }).on('end', () => {
+      var url = data.slice(4);
+      archive.isUrlArchived(url, function(bool) {
+        if (bool) { 
+          exports.readAndSendFile(archive.paths.archivedSites + '/' + url, res, 302);
+        } else {
+          exports.readAndSendFile(archive.paths.siteAssets + '/loading.html', res, 302);
+        }
+      });
+    });
+  }
 };
 
-exports.handleRequest = function (req, res) {
-  
+exports.handleRequest = function (req, res) { 
   var action = req.method;
   actions[action](req, res); // calls helpers for GET or POST
-
 };
