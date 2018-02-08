@@ -43,7 +43,8 @@ var actions = {
   },
   
   'POST': function(req, res) {
-    // do something to respond to post
+    console.log('I got called');
+    res.end();
   },
 };
 
