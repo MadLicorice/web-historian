@@ -4,6 +4,7 @@ var helpers = require('./http-helpers');
 var url = require('url');
 var fs = require('fs');
 var _ = require('underscore');
+var worker = require('../workers/htmlfetcher');
 // require more modules/folders here!
 
 exports.sendResponse = function(res, statusCode, message) {
@@ -14,8 +15,12 @@ exports.sendResponse = function(res, statusCode, message) {
 exports.readAndSendFile = function(pathname, res, statusCode) {
   var websiteHtml = '';
   fs.readFile(pathname, 'utf8', function(err, chunk) {
-    websiteHtml += chunk;
-    exports.sendResponse(res, statusCode, websiteHtml);
+    if (err) {
+      console.log(err);
+    } else {
+      websiteHtml += chunk;
+      exports.sendResponse(res, statusCode, websiteHtml);
+    }
   });
 };
 

@@ -32,9 +32,15 @@ exports.readListOfUrls = function(callback) {
   //iterate over array, call cb on each elem
   var data = '';
   fs.readFile(exports.paths.list, 'utf8', function(err, chunk) {
-    data += chunk;
-    data = data.split('\n');
-    callback(data);
+    if (err) {
+      console.log(err);
+    } else {
+      data += chunk;
+      data = data.split('\n');
+      if (callback) {
+        callback(data);
+      }
+    }
   });
 };
 
@@ -64,13 +70,18 @@ exports.isUrlArchived = function(url, callback) {
   // use readdir to check if our url is a filename in the dir
   
   fs.readdir(exports.paths.archivedSites, function(err, files) {
-    callback(files.includes(url));
+    if (err) {
+      console.log(err);
+    } else {
+      callback(files.includes(url));
+    }
   });
 };
 
 exports.downloadUrls = function(urls) {
   // worker crap
   urls.forEach(function(url) {
+    if (!url) { return; }
     request('http://' + url).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + url));
   });
 
